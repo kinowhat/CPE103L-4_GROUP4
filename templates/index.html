@@ -3,13 +3,13 @@
 
 <head>
     <title>Login Page</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body>
 
     <div class="login-box">
-        <img src="image-removebg-preview.png" alt="Company Logo" class="login-logo">
+        <img src="{{ url_for('static', filename='image-removebg-preview.png') }}" alt="Company Logo" class="login-logo">
 
         <form>
             <input type="text" id="username" placeholder="Username" required>
@@ -25,7 +25,7 @@
         const user = document.getElementById('username').value;
         const pass = document.getElementById('password').value;
         
-        const response = await fetch('http://localhost:5000/login', {
+        const response = await fetch('/login', {
             method: 'POST',
             headers: {'Content-Type': 'application/json' },
             body: JSON.stringify({ username: user, password: pass })
@@ -35,9 +35,9 @@
         console.log(data.role)
         
         if (data.role === 'admin') {
-            window.location.href = 'admin.html';
+            window.location.href = '/admin';
         } else if (data.role === 'user') {
-            window.location.href = 'user.html';
+            window.location.href = '/user';
         } else {
             alert("Wrong credentials!");
         }

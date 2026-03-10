@@ -145,7 +145,7 @@ productImage.addEventListener("change", function() {
   reader.readAsDataURL(this.files[0]);
 });
 
-saveBtn.onclick = () => {
+saveBtn.onclick = async () => {
   const name = productName.value;
   const price = productPrice.value;
   const qty = productQty.value;
@@ -154,6 +154,16 @@ saveBtn.onclick = () => {
     alert("Fill all fields.");
     return;
   }
+  const response = await fetch('/add_item', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: name, price: price, qty: qty, image: imageData })
+        });
+
+
+  const data = await response.json();
+  console.log(data.message);
+
 
   const card = document.createElement("div");
   card.className = "product-card";
@@ -167,15 +177,38 @@ saveBtn.onclick = () => {
   `;
 
   productContainer.appendChild(card);
-
   card.querySelector(".delete-btn").onclick = () => card.remove();
 
   popup.classList.add("hidden");
   productName.value = productPrice.value = productQty.value = "";
   productImage.value = "";
   imageData = "";
+
+  
+
+
 };
 
+async function loadItems() {
+  const response = await fetch('/get_items');
+  const data = await response.json();
+
+  productContainer.innerHTML = "";
+
+  data.items.forEach(item => {
+    const card = document.createElement("div");
+    card.className = "product-card";
+    card.innerHTML = `
+      <button class="delete-btn">×</button>
+      <img src="${item.image}">
+      <h4>${item.name}</h4>
+      <p>Price: ₱${item.price}</p>
+      <p>Qty: ${item.qty}</p>
+    `;
+    productContainer.appendChild(card);
+    card.querySelector(".delete-btn").onclick = () => card.remove();
+  });
+}
 /* ---------------------------
    ADD RESERVATION POPUP
 ---------------------------- */
@@ -224,6 +257,7 @@ saveReserveBtn.onclick = () => {
 
   studentName.value = studentNumber.value = reserveProduct.value =
   reserveQty.value = reservePrice.value = "";
+
 };
 
 /* ---------------------------
@@ -235,7 +269,10 @@ closeResDetails.onclick = () => resDetailsPopup.classList.add("hidden");
 function setStatus(status) {
   alert("Status updated to: " + status);
 }
+loadItems();
+
 </script>
+
 
 </body>
 </html>

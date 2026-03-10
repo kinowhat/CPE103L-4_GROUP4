@@ -11,10 +11,29 @@ def connect_db():
 def setup_db():
     conn = connect_db()
     cursor = conn.cursor()
-    cursor.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT UNIQUE, password TEXT, role TEXT)")
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY,
+            username TEXT UNIQUE,
+            password TEXT,
+            role TEXT
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS items (
+            id INTEGER PRIMARY KEY,
+            name TEXT,
+            price REAL,
+            qty INTEGER,
+            image TEXT
+        )
+    """)
+
     cursor.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES ('admin', 'admin123', 'admin')")
     cursor.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES ('user', 'user123', 'user')")
-    cursor.execute("CREATE TABLE IF NOT EXISTS items (id INTEGER PRIMARY KEY, name TEXT, price REAL, qty INTEGER, image TEXT)")
+
     conn.commit()
     conn.close()
 
@@ -27,6 +46,30 @@ def home():
 @app.route('/admin')
 def admin_page():
     return render_template('admin.html')
+
+@app.route('/user')
+def user_page():
+    return render_template('user.html')
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    username = data['username']
+    password = data['password']
+
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT role FROM users WHERE username = ? AND password = ?",
+        (username, password)
+    )
+    user = cursor.fetchone()
+    conn.close()
+
+    if user:
+        return jsonify({'role': user[0]})
+    else:
+        return jsonify({'role': None})
 
 @app.route('/add_item', methods=['POST'])
 def add_item():
@@ -67,14 +110,5 @@ def get_items():
 
     return jsonify({"items": items})
 
-@app.route("/")
-def home():
-    return render_template("index.html")
-
-@app.route("/admin")
-def admin():
-    return render_template("admin.html")
-
 if __name__ == '__main__':
     app.run(debug=True)
-

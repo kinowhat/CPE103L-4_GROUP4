@@ -1,3 +1,5 @@
+from datetime import date
+
 class ReservationList:
     def __init__(self):
         self.reservation = None
@@ -9,12 +11,15 @@ class ReservationList:
     def __str__(self):
         return f"Name = {self.reservation['Name']}\nProduct = {self.reservation['Product']}\nQty = {self.reservation['Qty']}\nDate = {self.reservation['Date']}"
 
-
-store = ReservationSystem()
+store = ReservationList()
 name = input("Enter name: ")
 product = input("Enter product: ")
 qty = int(input("Enter quantity: "))
-date = input("Enter date: ")
-store.reservationList(name, product, qty, date)
 
+
+today = date.today().strftime("%Y-%m-%d")
+
+store.reservationList(name, product, qty, today)
+
+print("\n--- Reservation Details ---")
 print(store)

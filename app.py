@@ -31,8 +31,12 @@ def setup_db():
         )
     """)
 
-    cursor.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES ('admin', 'admin123', 'admin')")
-    cursor.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES ('user', 'user123', 'user')")
+    cursor.execute(
+        "INSERT OR IGNORE INTO users (username, password, role) VALUES ('admin', 'admin123', 'admin')"
+    )
+    cursor.execute(
+        "INSERT OR IGNORE INTO users (username, password, role) VALUES ('user', 'user123', 'user')"
+    )
 
     conn.commit()
     conn.close()
@@ -68,8 +72,7 @@ def login():
 
     if user:
         return jsonify({'role': user[0]})
-    else:
-        return jsonify({'role': None})
+    return jsonify({'role': None})
 
 @app.route('/add_item', methods=['POST'])
 def add_item():

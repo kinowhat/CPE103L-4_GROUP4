@@ -83,14 +83,16 @@ async function loadItems() {
     const card = document.createElement("div");
     card.className = "product-card";
     card.innerHTML = `
-      <button class="delete-btn">×</button>
       <img src="${item.image}">
       <h4>${item.name}</h4>
       <p>Price: ₱${item.price}</p>
       <p>Qty: ${item.qty}</p>
     `;
+
+    productContainer.appendChild(card);
   });
 }
+
 /* -------------------------
    DISPLAY RESERVATIONS
 --------------------------- */
@@ -121,3 +123,4 @@ loadReservations();
 
 </body>
 </html>
+

@@ -1,4 +1,4 @@
-class ReservationSystem:
+class ReservationList:
     def __init__(self):
         self.reservation = None
 
@@ -16,4 +16,5 @@ product = input("Enter product: ")
 qty = int(input("Enter quantity: "))
 date = input("Enter date: ")
 store.reservationList(name, product, qty, date)
+
 print(store)

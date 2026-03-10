@@ -73,24 +73,24 @@ function showSection(section) {
 /* -------------------------
    DISPLAY PRODUCTS
 --------------------------- */
-function loadProducts() {
+async function loadItems() {
+  const response = await fetch('/get_items');
+  const data = await response.json();
+
   productContainer.innerHTML = "";
 
-  allProducts.forEach(p => {
+  data.items.forEach(item => {
     const card = document.createElement("div");
-    card.className = "product-card view-only";
-
+    card.className = "product-card";
     card.innerHTML = `
-      <img src="${p.image}">
-      <h4>${p.name}</h4>
-      <p>Price: ₱${p.price}</p>
-      <p>Qty: ${p.qty}</p>
+      <button class="delete-btn">×</button>
+      <img src="${item.image}">
+      <h4>${item.name}</h4>
+      <p>Price: ₱${item.price}</p>
+      <p>Qty: ${item.qty}</p>
     `;
-
-    productContainer.appendChild(card);
   });
 }
-
 /* -------------------------
    DISPLAY RESERVATIONS
 --------------------------- */
@@ -115,7 +115,7 @@ function loadReservations() {
 /* -------------------------
    INITIAL LOAD
 --------------------------- */
-loadProducts();
+loadItems();
 loadReservations();
 </script>
 

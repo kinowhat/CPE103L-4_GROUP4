@@ -97,7 +97,7 @@ def add_item():
 def get_items():
     conn = connect_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM items")
+    cursor.execute("SELECT * FROM items WHERE qty > 0")
     rows = cursor.fetchall()
     conn.close()
 
@@ -113,5 +113,22 @@ def get_items():
 
     return jsonify({"items": items})
 
+@app.route('/update_item', methods=['PUT'])
+def update_item():
+    data = request.get_json()
+    id = data['id']
+
+    conn = connect_db()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "UPDATE items SET name=?, price=?, qty=?, image=? WHERE id=?",
+        (name, price, qty, image, id)
+    )
+
+    conn.commit()
+    conn.close()
+
 if __name__ == '__main__':
     app.run(debug=True)
+

@@ -1,3 +1,11 @@
+.low-stock-text {
+    color: #ff4d4d;
+    font-weight: bold;
+}
+
+.low-stock-card {
+    border: 2px solid #ff4d4d;
+}
 * {
     box-sizing: border-box;
 
@@ -84,4 +92,5 @@ body {
 }
 
 /* admin html */
+
 

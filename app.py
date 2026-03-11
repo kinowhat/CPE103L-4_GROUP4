@@ -31,6 +31,16 @@ def setup_db():
         )
     """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS reservations (
+            id INTEGER PRIMARY KEY,
+            username TEXT,
+            item_id INTEGER,
+            qty INTEGER,
+            pickup_date TEXT
+        )
+    """)
+
     cursor.execute(
         "INSERT OR IGNORE INTO users (username, password, role) VALUES ('admin', 'admin123', 'admin')"
     )
@@ -116,20 +126,65 @@ def get_items():
 @app.route('/update_item', methods=['PUT'])
 def update_item():
     data = request.get_json()
-    id = data['id']
+    item_id = data['id']
+    name = data['name']
+    price = data['price']
+    qty = data['qty']
+    image = data['image']
 
     conn = connect_db()
     cursor = conn.cursor()
 
     cursor.execute(
         "UPDATE items SET name=?, price=?, qty=?, image=? WHERE id=?",
-        (name, price, qty, image, id)
+        (name, price, qty, image, item_id)
     )
 
     conn.commit()
     conn.close()
 
-    return jsonify({"message": f"Item {id} updated successfully!"})
+    return jsonify({"message": f"Item {item_id} updated successfully!"})
 
+@app.route('/add_reservation', methods=['POST'])
+def add_reservation():
+    data = request.get_json()
+    username = data['username']
+    item_id = data['item_id']
+    qty = data['qty']
+    pickup_date = data['pickup_date']
+
+    conn = connect_db()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "INSERT INTO reservations (username, item_id, qty, pickup_date) VALUES (?, ?, ?, ?)",
+        (username, item_id, qty, pickup_date)
+    )
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"message": "Reservation added successfully!"})
+
+@app.route('/get_reservations/<username>', methods=['GET'])
+def get_reservations(username):
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM reservations WHERE username=? ORDER BY pickup_date ASC", (username,))
+    rows = cursor.fetchall()
+    conn.close()
+
+    reservations = []
+    for row in rows:
+        reservations.append({
+            "id": row[0],
+            "username": row[1],
+            "item_id": row[2],
+            "qty": row[3],
+            "pickup_date": row[4]
+        })
+
+    return jsonify({"reservations": reservations})
+    
 if __name__ == '__main__':
     app.run(debug=True)

@@ -129,6 +129,7 @@ def update_item():
     conn.commit()
     conn.close()
 
+    return jsonify({"message": f"Item {id} updated successfully!"})
+
 if __name__ == '__main__':
     app.run(debug=True)
-

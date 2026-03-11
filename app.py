@@ -1,9 +1,16 @@
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import sqlite3
+from Item import Item
+from Reservation import Reservation
+
+
+
 
 app = Flask(__name__)
 CORS(app)
+
+LOW_STOCK_THRESHOLD = 5   # add this
 
 def connect_db():
     return sqlite3.connect("userDatabase.db")
@@ -11,15 +18,16 @@ def connect_db():
 def setup_db():
     conn = connect_db()
     cursor = conn.cursor()
-
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY,
             username TEXT UNIQUE,
+            email TEXT UNIQUE,
             password TEXT,
             role TEXT
         )
     """)
+
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS items (
@@ -37,21 +45,58 @@ def setup_db():
             username TEXT,
             item_id INTEGER,
             qty INTEGER,
-            pickup_date TEXT
+            pickup_date TEXT,
+            status TEXT
         )
     """)
 
+
     cursor.execute(
-        "INSERT OR IGNORE INTO users (username, password, role) VALUES ('admin', 'admin123', 'admin')"
+        "INSERT OR IGNORE INTO users (username, email, password, role) VALUES ('admin', 'admin@gmail.com', 'admin123', 'admin')"
     )
     cursor.execute(
-        "INSERT OR IGNORE INTO users (username, password, role) VALUES ('user', 'user123', 'user')"
+        "INSERT OR IGNORE INTO users (username, email, password, role) VALUES ('user', 'user@gmail.com', 'user123', 'user')"
     )
+
 
     conn.commit()
     conn.close()
 
 setup_db()
+
+@app.route('/register', methods=['POST'])
+def register():
+    data = request.get_json()
+
+    username = data['username']
+    email = data['email']
+    password = data['password']
+
+    conn = connect_db()
+    cursor = conn.cursor()
+
+    # Check if username or email already exists
+    cursor.execute(
+        "SELECT * FROM users WHERE username=? OR email=?",
+        (username, email)
+    )
+    existing = cursor.fetchone()
+
+    if existing:
+        conn.close()
+        return jsonify({"message": "Username or email already exists"}), 400
+
+    # Automatically assign role = student
+    cursor.execute(
+        "INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)",
+        (username, email, password, "student")
+    )
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"message": "Registration successful!"})
+
 
 @app.route('/')
 def home():
@@ -113,12 +158,15 @@ def get_items():
 
     items = []
     for row in rows:
+        item_obj = Item(row[1], row[3], row[2])
+
         items.append({
             "id": row[0],
-            "name": row[1],
-            "price": row[2],
-            "qty": row[3],
-            "image": row[4]
+            "name": item_obj.getName(),
+            "price": item_obj.getPrice(),
+            "qty": item_obj.getQuantity(),
+            "image": row[4],
+            "low_stock": item_obj.setLowStockFlag()
         })
 
     return jsonify({"items": items})
@@ -147,6 +195,7 @@ def update_item():
 
 @app.route('/add_reservation', methods=['POST'])
 def add_reservation():
+    reservation = Reservation(username, item_id, qty, pickup_date)
     data = request.get_json()
     username = data['username']
     item_id = data['item_id']
@@ -157,8 +206,8 @@ def add_reservation():
     cursor = conn.cursor()
 
     cursor.execute(
-        "INSERT INTO reservations (username, item_id, qty, pickup_date) VALUES (?, ?, ?, ?)",
-        (username, item_id, qty, pickup_date)
+        "INSERT INTO reservations (username, item_id, qty, pickup_date, status) VALUES (?, ?, ?, ?, ?)",
+        (username, item_id, qty, pickup_date, "pending")
     )
 
     conn.commit()
@@ -170,7 +219,17 @@ def add_reservation():
 def get_reservations(username):
     conn = connect_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM reservations WHERE username=? ORDER BY pickup_date ASC", (username,))
+
+    cursor.execute("""
+        SELECT reservations.id, reservations.username, reservations.item_id,
+               reservations.qty, reservations.pickup_date, reservations.status, items.name
+        FROM reservations
+        JOIN items ON reservations.item_id = items.id
+        WHERE reservations.username = ?
+          AND reservations.status IN ('pending', 'approved')
+        ORDER BY reservations.pickup_date ASC
+    """, (username,))
+
     rows = cursor.fetchall()
     conn.close()
 
@@ -181,10 +240,13 @@ def get_reservations(username):
             "username": row[1],
             "item_id": row[2],
             "qty": row[3],
-            "pickup_date": row[4]
+            "pickup_date": row[4],
+            "status": row[5],
+            "item_name": row[6]
         })
 
     return jsonify({"reservations": reservations})
+
     
 if __name__ == '__main__':
     app.run(debug=True)

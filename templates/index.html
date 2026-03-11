@@ -36,13 +36,45 @@
         
         if (data.role === 'admin') {
             window.location.href = '/admin';
-        } else if (data.role === 'user') {
+        } else if (data.role === 'student' || data.role === 'user') {
             window.location.href = '/user';
         } else {
             alert("Wrong credentials!");
         }
+
     }
+
+    async function registerUser() {
+
+  const username = document.getElementById("regUsername").value;
+  const email = document.getElementById("regEmail").value;
+  const password = document.getElementById("regPassword").value;
+
+  const response = await fetch("/register", {
+      method: "POST",
+      headers: {
+          "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+          username: username,
+          email: email,
+          password: password
+      })
+  });
+
+  const data = await response.json();
+
+  alert(data.message);
+}
+
 </script>
+<h3>Register</h3>
+
+<input type="text" id="regUsername" placeholder="Username">
+<input type="email" id="regEmail" placeholder="Email">
+<input type="password" id="regPassword" placeholder="Password">
+
+<button onclick="registerUser()">Sign Up</button>
 
 </body>
 </html>

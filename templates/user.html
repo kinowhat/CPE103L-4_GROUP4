@@ -78,9 +78,13 @@ async function loadItems() {
 
   productContainer.innerHTML = "";
 
-  data.items.forEach(item => {
-    const card = document.createElement("div");
-    card.className = "product-card";
+data.items.forEach(item => {
+  const card = document.createElement("div");
+
+  card.className = item.low_stock
+    ? "product-card low-stock-card"
+    : "product-card";
+
     card.innerHTML = `
       <img src="${item.image}">
       <h4>${item.name}</h4>

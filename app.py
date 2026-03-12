@@ -152,21 +152,21 @@ def add_item():
 def get_items():
     conn = connect_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM items WHERE qty > 0")
+    cursor.execute("SELECT * FROM items") 
     rows = cursor.fetchall()
     conn.close()
 
+    print("ROWS FOUND:", rows)  
+
     items = []
     for row in rows:
-        item_obj = Item(row[1], row[3], row[2])
-
         items.append({
             "id": row[0],
-            "name": item_obj.getName(),
-            "price": item_obj.getPrice(),
-            "qty": item_obj.getQuantity(),
+            "name": row[1],
+            "price": row[2],
+            "qty": row[3],
             "image": row[4],
-            "low_stock": item_obj.setLowStockFlag()
+            "low_stock": row[3] <= 5
         })
 
     return jsonify({"items": items})
@@ -266,5 +266,6 @@ def get_reservations(username):
     
 if __name__ == '__main__':
     app.run(debug=True)
+
 
 

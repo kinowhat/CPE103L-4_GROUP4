@@ -170,43 +170,7 @@
     reservePopup.classList.add("hidden");
   };
 
-  document.getElementById("saveReserveBtn").onclick = async () => {
-    const item_id = document.getElementById("reserveProduct").value;
-    const qty = document.getElementById("reserveQty").value;
-    const pickup_date = document.getElementById("reserveDate").value;
-
-    if (!item_id || !qty || !pickup_date) {
-      alert("Please fill all fields.");
-      return;
-    }
-
-    try {
-      const response = await fetch('/add_reservation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: currentUsername,
-          item_id: parseInt(item_id),
-          qty: parseInt(qty),
-          pickup_date: pickup_date
-        })
-      });
-
-      const data = await response.json();
-      alert(data.message);
-
-      reservePopup.classList.add("hidden");
-      document.getElementById("reserveQty").value = "";
-      document.getElementById("reserveDate").value = "";
-
-      loadReservations();
-
-    } catch (err) {
-      console.error("Failed to add reservation:", err);
-      alert("Error adding reservation.");
-    }
-  };
-
+ where
   /* -------------------------
      INITIAL LOAD
   --------------------------- */
@@ -215,3 +179,4 @@
 </script>
 </body>
 </html>
+

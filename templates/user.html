@@ -11,100 +11,29 @@
     <div class="logo-area">
         <img src="{{ url_for('static', filename='image-removebg-preview.png') }}" alt="Logo">
     </div>
-
     <div class="nav-center">
         <h2 class="nav-btn active" onclick="showSection('products')">Products</h2>
         <h2 class="nav-btn" onclick="showSection('reservations')">Reservations</h2>
     </div>
-
-    <button class="logout-btn" onclick="window.location.href='/'">
-        Logout
-    </button>
+    <button class="logout-btn" onclick="window.location.href='/'">Logout</button>
   </header>
 
   <!-- PRODUCTS SECTION -->
   <section class="main" id="products-section">
     <h3>All Products</h3>
-
-    <!-- No Add Button -->
     <div class="actions">
       <input type="text" id="searchBar" placeholder="Search product...">
     </div>
-
     <div id="productContainer" class="product-container"></div>
   </section>
 
   <!-- RESERVATIONS SECTION -->
   <section class="main hidden" id="reservations-section">
     <h3>All Reservations</h3>
-
-    <!-- No Add Button -->
-    <div class="actions">
-      <input type="text" id="searchResBar" placeholder="Search reservation...">
-    </div>
-
-    <div id="reservationContainer" class="reservation-container"></div>
-  </section>
-
-<script>
-/* Load shared data from localStorage */
-let allProducts = JSON.parse(localStorage.getItem("products") || "[]");
-let allReservations = JSON.parse(localStorage.getItem("reservations") || "[]");
-
-/* -------------------------
-   SWITCH SECTIONS
---------------------------- */
-function showSection(section) {
-  document.querySelectorAll(".nav-btn").forEach(btn => btn.classList.remove("active"));
-
-  if (section === "products") {
-    document.querySelector(".nav-btn:nth-child(1)").classList.add("active");
-  } else {
-    document.querySelector(".nav-btn:nth-child(2)").classList.add("active");
-  }
-
-  document.getElementById("products-section").classList.add("hidden");
-  document.getElementById("reservations-section").classList.add("hidden");
-
-  document.getElementById(section + "-section").classList.remove("hidden");
-}
-
-/* -------------------------
-   DISPLAY PRODUCTS
---------------------------- */
-async function loadItems() {
-  const response = await fetch('/get_items');
-  const data = await response.json();
-
-  productContainer.innerHTML = "";
-
-data.items.forEach(item => {
-  const card = document.createElement("div");
-
-  card.className = item.low_stock
-    ? "product-card low-stock-card"
-    : "product-card";
-
-    card.innerHTML = `
-      <img src="${item.image}">
-      <h4>${item.name}</h4>
-      <p>Price: ₱${item.price}</p>
-      <p>Qty: ${item.qty}</p>
-    `;
-
-    productContainer.appendChild(card);
-  });
-}
-
-   <!-- RESERVATIONS SECTION -->
-  <section class="main hidden" id="reservations-section">
-    <h3>All Reservations</h3>
-
     <div class="actions">
       <input type="text" id="searchResBar" placeholder="Search reservation...">
       <button id="addReserveBtn">Add Reservation</button>
     </div>
-
     <div id="reservationContainer" class="reservation-container"></div>
   </section>
 
@@ -112,19 +41,14 @@ data.items.forEach(item => {
   <div id="popup" class="popup hidden">
     <div class="popup-content">
       <h3>Add New Product</h3>
-
       <label>Product Name</label>
       <input type="text" id="productName">
-
       <label>Product Image</label>
       <input type="file" id="productImage" accept="image/*">
-
       <label>Price</label>
       <input type="number" id="productPrice" min="1">
-
       <label>Quantity</label>
       <input type="number" id="productQty" min="1">
-
       <div class="popup-buttons">
         <button id="cancelBtn">Cancel</button>
         <button id="saveBtn">Save Product</button>
@@ -136,22 +60,16 @@ data.items.forEach(item => {
   <div id="reservePopup" class="popup hidden">
     <div class="popup-content">
       <h3>Add Reservation</h3>
-
       <label>Student Name</label>
       <input type="text" id="studentName">
-
       <label>Student Number</label>
       <input type="text" id="studentNumber">
-
       <label>Product</label>
       <input type="text" id="reserveProduct">
-
       <label>Quantity</label>
       <input type="number" id="reserveQty" min="1">
-
       <label>Price</label>
       <input type="number" id="reservePrice" min="1">
-
       <div class="popup-buttons">
         <button id="cancelReserveBtn">Cancel</button>
         <button id="saveReserveBtn">Proceed</button>
@@ -159,38 +77,77 @@ data.items.forEach(item => {
     </div>
   </div>
 
+<script>
+  let allReservations = JSON.parse(localStorage.getItem("reservations") || "[]");
 
-  
-/* -------------------------
-   DISPLAY RESERVATIONS
---------------------------- */
-function loadReservations() {
-  reservationContainer.innerHTML = "";
+  // Get containers AFTER DOM is loaded
+  const productContainer = document.getElementById("productContainer");
+  const reservationContainer = document.getElementById("reservationContainer");
 
-  allReservations.forEach(r => {
-    const row = document.createElement("div");
-    row.className = "reservation-card view-only";
+  /* -------------------------
+     SWITCH SECTIONS
+  --------------------------- */
+  function showSection(section) {
+    document.querySelectorAll(".nav-btn").forEach(btn => btn.classList.remove("active"));
 
-    row.innerHTML = `
-      <div class="res-info">
-        <strong>${r.name}</strong> • ${r.number} • ${r.product} • Qty: ${r.qty} • ₱${r.price}
-      </div>
-      <div class="res-status">Status: ${r.status}</div>
-    `;
+    if (section === "products") {
+      document.querySelector(".nav-btn:nth-child(1)").classList.add("active");
+    } else {
+      document.querySelector(".nav-btn:nth-child(2)").classList.add("active");
+    }
 
-    reservationContainer.appendChild(row);
-  });
-}
+    document.getElementById("products-section").classList.add("hidden");
+    document.getElementById("reservations-section").classList.add("hidden");
+    document.getElementById(section + "-section").classList.remove("hidden");
+  }
 
-/* -------------------------
-   INITIAL LOAD
---------------------------- */
-loadItems();
-loadReservations();
+  /* -------------------------
+     DISPLAY PRODUCTS
+  --------------------------- */
+  async function loadItems() {
+    const response = await fetch('/get_items');
+    const data = await response.json();
+
+    productContainer.innerHTML = "";
+
+    data.items.forEach(item => {
+      const card = document.createElement("div");
+      card.className = item.low_stock ? "product-card low-stock-card" : "product-card";
+      card.innerHTML = `
+        <img src="${item.image}">
+        <h4>${item.name}</h4>
+        <p>Price: ₱${item.price}</p>
+        <p>Qty: ${item.qty}</p>
+      `;
+      productContainer.appendChild(card);
+    });
+  }
+
+  /* -------------------------
+     DISPLAY RESERVATIONS
+  --------------------------- */
+  function loadReservations() {
+    reservationContainer.innerHTML = "";
+
+    allReservations.forEach(r => {
+      const row = document.createElement("div");
+      row.className = "reservation-card view-only";
+      row.innerHTML = `
+        <div class="res-info">
+          <strong>${r.name}</strong> • ${r.number} • ${r.product} • Qty: ${r.qty} • ₱${r.price}
+        </div>
+        <div class="res-status">Status: ${r.status}</div>
+      `;
+      reservationContainer.appendChild(row);
+    });
+  }
+
+  /* -------------------------
+     INITIAL LOAD
+  --------------------------- */
+  loadItems();
+  loadReservations();
 </script>
 
 </body>
 </html>
-
-
-

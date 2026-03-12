@@ -195,12 +195,12 @@ def update_item():
 
 @app.route('/add_reservation', methods=['POST'])
 def add_reservation():
-    reservation = Reservation(username, item_id, qty, pickup_date)
-    data = request.get_json()
+    data = request.get_json()           
     username = data['username']
     item_id = data['item_id']
     qty = data['qty']
     pickup_date = data['pickup_date']
+    reservation = Reservation(username, item_id, qty, pickup_date)
 
     conn = connect_db()
     cursor = conn.cursor()
@@ -250,3 +250,4 @@ def get_reservations(username):
     
 if __name__ == '__main__':
     app.run(debug=True)
+

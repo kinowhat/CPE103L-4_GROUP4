@@ -195,15 +195,31 @@ def update_item():
 
 @app.route('/add_reservation', methods=['POST'])
 def add_reservation():
-    data = request.get_json()           
+    data = request.get_json()
     username = data['username']
     item_id = data['item_id']
     qty = data['qty']
     pickup_date = data['pickup_date']
-    reservation = Reservation(username, item_id, qty, pickup_date)
 
     conn = connect_db()
     cursor = conn.cursor()
+
+    # Check item exists and has enough stock
+    cursor.execute("SELECT qty FROM items WHERE id = ?", (item_id,))
+    item = cursor.fetchone()
+
+    if not item:
+        conn.close()
+        return jsonify({"message": "Item not found."}), 404
+
+    if item[0] < qty:
+        conn.close()
+        return jsonify({"message": f"Not enough stock. Only {item[0]} left."}), 400
+
+    cursor.execute(
+        "UPDATE items SET qty = qty - ? WHERE id = ?",
+        (qty, item_id)
+    )
 
     cursor.execute(
         "INSERT INTO reservations (username, item_id, qty, pickup_date, status) VALUES (?, ?, ?, ?, ?)",
@@ -250,4 +266,5 @@ def get_reservations(username):
     
 if __name__ == '__main__':
     app.run(debug=True)
+
 

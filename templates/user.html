@@ -12,11 +12,11 @@
     </div>
 
     <div class="nav-center">
-      <h2 class="nav-btn active" onclick="showSection('products')">Products</h2>
-      <h2 class="nav-btn" onclick="showSection('reservations')">Reservations</h2>
+      <h2 id="productsTab" class="nav-btn active" onclick="showSection('products')">Products</h2>
+      <h2 id="reservationsTab" class="nav-btn" onclick="showSection('reservations')">Reservations</h2>
     </div>
 
-    <button class="logout-btn" onclick="window.location.href='/'">Logout</button>
+    <button class="logout-btn" type="button">Logout</button>
   </header>
 
   <section class="main" id="products-section">
@@ -31,7 +31,7 @@
     <h3>My Reservations</h3>
     <div class="actions">
       <input type="text" id="searchResBar" placeholder="Search reservation...">
-      <button id="addReserveBtn">Add Reservation</button>
+      <button id="addReserveBtn" type="button">Add Reservation</button>
     </div>
     <div id="reservationContainer" class="reservation-container"></div>
   </section>
@@ -50,8 +50,8 @@
       <input type="date" id="reserveDate">
 
       <div class="popup-buttons">
-        <button id="cancelReserveBtn">Cancel</button>
-        <button id="saveReserveBtn">Proceed</button>
+        <button id="cancelReserveBtn" type="button">Cancel</button>
+        <button id="saveReserveBtn" type="button">Proceed</button>
       </div>
     </div>
   </div>
@@ -60,15 +60,43 @@
     const productContainer = document.getElementById("productContainer");
     const reservationContainer = document.getElementById("reservationContainer");
     const reservePopup = document.getElementById("reservePopup");
-    const currentUsername = "user";
+
+    const productsTab = document.getElementById("productsTab");
+    const reservationsTab = document.getElementById("reservationsTab");
+
+    const addReserveBtn = document.getElementById("addReserveBtn");
+    const cancelReserveBtn = document.getElementById("cancelReserveBtn");
+    const saveReserveBtn = document.getElementById("saveReserveBtn");
+
+    const reserveProduct = document.getElementById("reserveProduct");
+    const reserveQty = document.getElementById("reserveQty");
+    const reserveDate = document.getElementById("reserveDate");
+
+    const currentUsername = localStorage.getItem("username");
+    console.log("USER PAGE currentUsername:", currentUsername);
+
+    if (!currentUsername) {
+      alert("Please log in first.");
+      window.location.href = "/";
+    }
+
+    function logout() {
+      localStorage.removeItem("username");
+      localStorage.removeItem("email");
+      localStorage.removeItem("role");
+      window.location.href = "/";
+    }
+
+    document.querySelector(".logout-btn").onclick = logout;
 
     function showSection(section) {
-      document.querySelectorAll(".nav-btn").forEach(btn => btn.classList.remove("active"));
+      productsTab.classList.remove("active");
+      reservationsTab.classList.remove("active");
 
       if (section === "products") {
-        document.querySelector(".nav-btn:nth-child(1)").classList.add("active");
+        productsTab.classList.add("active");
       } else {
-        document.querySelector(".nav-btn:nth-child(2)").classList.add("active");
+        reservationsTab.classList.add("active");
         loadReservations();
       }
 
@@ -79,37 +107,45 @@
 
     async function loadItems() {
       try {
-        const response = await fetch('/get_items');
+        const response = await fetch("/get_items");
         const data = await response.json();
 
         productContainer.innerHTML = "";
-        const select = document.getElementById("reserveProduct");
-        select.innerHTML = "";
+        reserveProduct.innerHTML = "";
 
         if (!data.items || data.items.length === 0) {
           productContainer.innerHTML = "<p>No products available.</p>";
           return;
         }
 
-        data.items.forEach(item => {
+        data.items.forEach((item) => {
           const card = document.createElement("div");
-          card.className = item.low_stock ? "product-card low-stock-card" : "product-card";
+          card.className = "product-card";
 
           card.innerHTML = `
             <img src="${item.image}" alt="${item.name}">
             <h4>${item.name}</h4>
             <p>Price: ₱${item.price}</p>
             <p>Qty: ${item.qty}</p>
-            ${item.low_stock ? '<p class="low-stock-text">⚠ Low Stock</p>' : ''}
           `;
 
           productContainer.appendChild(card);
 
-          const option = document.createElement("option");
-          option.value = item.id;
-          option.textContent = `${item.name} (₱${item.price})`;
-          select.appendChild(option);
+          if (item.qty > 0) {
+            const option = document.createElement("option");
+            option.value = item.id;
+            option.textContent = `${item.name} (₱${item.price})`;
+            reserveProduct.appendChild(option);
+          }
         });
+
+        if (reserveProduct.options.length === 0) {
+          const option = document.createElement("option");
+          option.textContent = "No items in stock";
+          option.disabled = true;
+          option.selected = true;
+          reserveProduct.appendChild(option);
+        }
       } catch (err) {
         console.error("Failed to load items:", err);
         productContainer.innerHTML = "<p>Error loading products.</p>";
@@ -128,15 +164,21 @@
           return;
         }
 
-        data.reservations.forEach(r => {
+        data.reservations.forEach((r) => {
           const row = document.createElement("div");
           row.className = "reservation-card";
+
           row.innerHTML = `
             <div class="res-info">
-              <strong>${r.item_name}</strong> • Qty: ${r.qty} • Pickup: ${r.pickup_date}
+              <strong>${r.item_name}</strong><br>
+              Qty: ${r.qty}<br>
+              Pickup: ${r.pickup_date}
             </div>
-            <div class="res-status">Status: ${r.status}</div>
+            <div class="res-status">
+              Status: ${r.status}
+            </div>
           `;
+
           reservationContainer.appendChild(row);
         });
       } catch (err) {
@@ -145,44 +187,55 @@
       }
     }
 
-    document.getElementById("addReserveBtn").onclick = () => {
+    addReserveBtn.onclick = () => {
       reservePopup.classList.remove("hidden");
     };
 
-    document.getElementById("cancelReserveBtn").onclick = () => {
+    cancelReserveBtn.onclick = () => {
       reservePopup.classList.add("hidden");
     };
 
-    document.getElementById("saveReserveBtn").onclick = async () => {
-      const item_id = document.getElementById("reserveProduct").value;
-      const qty = document.getElementById("reserveQty").value;
-      const pickup_date = document.getElementById("reserveDate").value;
+    saveReserveBtn.onclick = async () => {
+      const item_id = reserveProduct.value;
+      const qty = reserveQty.value;
+      const pickup_date = reserveDate.value;
+
+      if (!currentUsername) {
+        alert("No logged-in user found.");
+        return;
+      }
 
       if (!item_id || !qty || !pickup_date) {
         alert("Fill all fields.");
         return;
       }
 
-      const response = await fetch('/add_reservation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: currentUsername,
-          item_id: item_id,
-          qty: qty,
-          pickup_date: pickup_date
-        })
-      });
+      try {
+        const response = await fetch("/add_reservation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: currentUsername,
+            item_id: item_id,
+            qty: qty,
+            pickup_date: pickup_date
+          })
+        });
 
-      const data = await response.json();
-      alert(data.message);
+        const data = await response.json();
+        console.log("ADD RESERVATION RESPONSE:", data);
+        alert(data.message);
 
-      if (response.ok) {
-        reservePopup.classList.add("hidden");
-        document.getElementById("reserveQty").value = "";
-        document.getElementById("reserveDate").value = "";
-        loadItems();
-        loadReservations();
+        if (response.ok) {
+          reservePopup.classList.add("hidden");
+          reserveQty.value = "";
+          reserveDate.value = "";
+          loadItems();
+          loadReservations();
+        }
+      } catch (err) {
+        console.error("Failed to add reservation:", err);
+        alert("Failed to add reservation.");
       }
     };
 

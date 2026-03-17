@@ -1,0 +1,174 @@
+* {
+    box-sizing: border-box;
+}
+ 
+body {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: Arial, sans-serif;
+ 
+    /* --- Background Image Section --- */
+    background-image: url('purebg.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-color: #f2f2f2;
+}
+ 
+/* ── Auth Wrapper ── */
+.auth-wrapper {
+    display: flex;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    width: 800px;
+    max-width: 95vw;
+}
+ 
+/* ── Divider ── */
+.divider {
+    width: 1px;
+    background: linear-gradient(to bottom, transparent, #444, transparent);
+    align-self: stretch;
+}
+ 
+/* ── Register Panel (LEFT) ── */
+.register-box {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.85);
+    padding: 60px 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 14px;
+    color: white;
+}
+ 
+.register-box h3 {
+    color: #e2e2e2;
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+ 
+.register-box p.subtitle {
+    color: #888;
+    font-size: 13px;
+    margin-bottom: 6px;
+}
+ 
+.register-box input {
+    width: 100%;
+    padding: 10px;
+    margin: 0;
+    border-radius: 5px;
+    border: 1px solid #444;
+    background: #1a1a1a;
+    color: #e2e2e2;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+ 
+.register-box input::placeholder {
+    color: #666;
+}
+ 
+.register-box input:focus {
+    border-color: #ff0808;
+}
+ 
+.register-box button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 6px;
+    border: none;
+    border-radius: 5px;
+    background-color: #ff0808;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+ 
+.register-box button:hover {
+    background-color: #ff0000;
+}
+ 
+/* ── Login Panel (RIGHT) ── */
+.login-box {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 60px 40px;
+    border-radius: 0;
+    box-shadow: none;
+    width: auto;
+ 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+ 
+    color: white;
+}
+ 
+.login-logo {
+    width: 310px;
+    height: auto;
+    margin-bottom: 20px;
+    display: block;
+}
+ 
+.login-box h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+ 
+.login-box form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+ 
+.login-box input {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    outline: none;
+}
+ 
+.login-box button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 5px;
+    background-color: #ff0808;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+ 
+.login-box button:hover {
+    background-color: #ff0000;
+}
+ 
+/* admin html */
+ 
+@media (max-width: 620px) {
+    .auth-wrapper {
+        flex-direction: column-reverse;
+    }
+    .divider {
+        width: auto;
+        height: 1px;
+        background: linear-gradient(to right, transparent, #444, transparent);
+    }
+}

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>User Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
+</head>
+
+<body>
+
+<header class="top-nav">
+
+  <div class="logo-area">
+      <img src="{{ url_for('static', filename='image-removebg-preview.png') }}" alt="Logo">
+  </div>
+
+  <div class="nav-center">
+      <h2 class="nav-btn active" onclick="showSection('products')">Products</h2>
+      <h2 class="nav-btn" onclick="showSection('reservations')">Reservations</h2>
+  </div>
+
+  <button class="logout-btn" onclick="window.location.href='/'">
+      Logout
+  </button>
+
+</header>
+
+
+<!-- ======================
+PRODUCTS SECTION
+====================== -->
+<section class="main" id="products-section">
+
+  <h3>All Products</h3>
+
+  <div class="actions">
+    <input type="text" id="searchBar" placeholder="Search product...">
+  </div>
+
+  <div id="productContainer" class="product-container"></div>
+
+</section>
+
+
+<!-- ======================
+RESERVATIONS SECTION
+====================== -->
+<section class="main hidden" id="reservations-section">
+
+  <h3>All Reservations</h3>
+
+  <div class="actions">
+    <input type="text" id="searchResBar" placeholder="Search reservation...">
+  </div>
+
+  <div id="reservationContainer" class="reservation-container"></div>
+
+</section>
+
+
+<!-- ======================
+SECTION SWITCH SCRIPT
+====================== -->
+<script>
+
+function showSection(section) {
+
+  document.querySelectorAll(".nav-btn").forEach(btn => {
+    btn.classList.remove("active");
+  });
+
+  if (section === "products") {
+    document.querySelector(".nav-btn:nth-child(1)").classList.add("active");
+  } else {
+    document.querySelector(".nav-btn:nth-child(2)").classList.add("active");
+  }
+
+  document.getElementById("products-section").classList.add("hidden");
+  document.getElementById("reservations-section").classList.add("hidden");
+
+  document.getElementById(section + "-section").classList.remove("hidden");
+}
+
+</script>
+
+
+<!-- USER SCRIPT -->
+<script src="{{ url_for('static', filename='user.js') }}"></script>
+
+</body>
+</html>

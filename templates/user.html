@@ -8,16 +8,17 @@
 <body>
   <header class="top-nav">
     <div class="logo-area">
-        <img src="{{ url_for('static', filename='image-removebg-preview.png') }}" alt="Logo">
+      <img src="{{ url_for('static', filename='image-removebg-preview.png') }}" alt="Logo">
     </div>
+
     <div class="nav-center">
-        <h2 class="nav-btn active" onclick="showSection('products')">Products</h2>
-        <h2 class="nav-btn" onclick="showSection('reservations')">Reservations</h2>
+      <h2 class="nav-btn active" onclick="showSection('products')">Products</h2>
+      <h2 class="nav-btn" onclick="showSection('reservations')">Reservations</h2>
     </div>
+
     <button class="logout-btn" onclick="window.location.href='/'">Logout</button>
   </header>
 
-  <!-- PRODUCTS SECTION -->
   <section class="main" id="products-section">
     <h3>All Products</h3>
     <div class="actions">
@@ -26,7 +27,6 @@
     <div id="productContainer" class="product-container"></div>
   </section>
 
-  <!-- RESERVATIONS SECTION -->
   <section class="main hidden" id="reservations-section">
     <h3>My Reservations</h3>
     <div class="actions">
@@ -36,7 +36,6 @@
     <div id="reservationContainer" class="reservation-container"></div>
   </section>
 
-  <!-- ADD RESERVATION POPUP -->
   <div id="reservePopup" class="popup hidden">
     <div class="popup-content">
       <h3>Add Reservation</h3>
@@ -57,126 +56,138 @@
     </div>
   </div>
 
-<script>
-  const productContainer = document.getElementById("productContainer");
-  const reservationContainer = document.getElementById("reservationContainer");
-  const reservePopup = document.getElementById("reservePopup");
+  <script>
+    const productContainer = document.getElementById("productContainer");
+    const reservationContainer = document.getElementById("reservationContainer");
+    const reservePopup = document.getElementById("reservePopup");
+    const currentUsername = "user";
 
-  // Hardcoded for now — replace with session/login system later
-  const currentUsername = "user";
+    function showSection(section) {
+      document.querySelectorAll(".nav-btn").forEach(btn => btn.classList.remove("active"));
 
-  /* -------------------------
-     SWITCH SECTIONS
-  --------------------------- */
-  function showSection(section) {
-    document.querySelectorAll(".nav-btn").forEach(btn => btn.classList.remove("active"));
+      if (section === "products") {
+        document.querySelector(".nav-btn:nth-child(1)").classList.add("active");
+      } else {
+        document.querySelector(".nav-btn:nth-child(2)").classList.add("active");
+        loadReservations();
+      }
 
-    if (section === "products") {
-      document.querySelector(".nav-btn:nth-child(1)").classList.add("active");
-    } else {
-      document.querySelector(".nav-btn:nth-child(2)").classList.add("active");
-      loadReservations(); // refresh when switching to reservations tab
+      document.getElementById("products-section").classList.add("hidden");
+      document.getElementById("reservations-section").classList.add("hidden");
+      document.getElementById(section + "-section").classList.remove("hidden");
     }
 
-    document.getElementById("products-section").classList.add("hidden");
-    document.getElementById("reservations-section").classList.add("hidden");
-    document.getElementById(section + "-section").classList.remove("hidden");
-  }
+    async function loadItems() {
+      try {
+        const response = await fetch('/get_items');
+        const data = await response.json();
 
-  /* -------------------------
-     DISPLAY PRODUCTS
-  --------------------------- */
-  async function loadItems() {
-    try {
-      const response = await fetch('/get_items');
-      const data = await response.json();
+        productContainer.innerHTML = "";
+        const select = document.getElementById("reserveProduct");
+        select.innerHTML = "";
 
-      productContainer.innerHTML = "";
-      const select = document.getElementById("reserveProduct");
-      select.innerHTML = "";
+        if (!data.items || data.items.length === 0) {
+          productContainer.innerHTML = "<p>No products available.</p>";
+          return;
+        }
 
-      if (data.items.length === 0) {
-        productContainer.innerHTML = "<p>No products available.</p>";
+        data.items.forEach(item => {
+          const card = document.createElement("div");
+          card.className = item.low_stock ? "product-card low-stock-card" : "product-card";
+
+          card.innerHTML = `
+            <img src="${item.image}" alt="${item.name}">
+            <h4>${item.name}</h4>
+            <p>Price: ₱${item.price}</p>
+            <p>Qty: ${item.qty}</p>
+            ${item.low_stock ? '<p class="low-stock-text">⚠ Low Stock</p>' : ''}
+          `;
+
+          productContainer.appendChild(card);
+
+          const option = document.createElement("option");
+          option.value = item.id;
+          option.textContent = `${item.name} (₱${item.price})`;
+          select.appendChild(option);
+        });
+      } catch (err) {
+        console.error("Failed to load items:", err);
+        productContainer.innerHTML = "<p>Error loading products.</p>";
+      }
+    }
+
+    async function loadReservations() {
+      try {
+        const response = await fetch(`/get_reservations/${currentUsername}`);
+        const data = await response.json();
+
+        reservationContainer.innerHTML = "";
+
+        if (!data.reservations || data.reservations.length === 0) {
+          reservationContainer.innerHTML = "<p>No reservations yet.</p>";
+          return;
+        }
+
+        data.reservations.forEach(r => {
+          const row = document.createElement("div");
+          row.className = "reservation-card";
+          row.innerHTML = `
+            <div class="res-info">
+              <strong>${r.item_name}</strong> • Qty: ${r.qty} • Pickup: ${r.pickup_date}
+            </div>
+            <div class="res-status">Status: ${r.status}</div>
+          `;
+          reservationContainer.appendChild(row);
+        });
+      } catch (err) {
+        console.error("Failed to load reservations:", err);
+        reservationContainer.innerHTML = "<p>Error loading reservations.</p>";
+      }
+    }
+
+    document.getElementById("addReserveBtn").onclick = () => {
+      reservePopup.classList.remove("hidden");
+    };
+
+    document.getElementById("cancelReserveBtn").onclick = () => {
+      reservePopup.classList.add("hidden");
+    };
+
+    document.getElementById("saveReserveBtn").onclick = async () => {
+      const item_id = document.getElementById("reserveProduct").value;
+      const qty = document.getElementById("reserveQty").value;
+      const pickup_date = document.getElementById("reserveDate").value;
+
+      if (!item_id || !qty || !pickup_date) {
+        alert("Fill all fields.");
         return;
       }
 
-      data.items.forEach(item => {
-        // Build product card
-        const card = document.createElement("div");
-        card.className = item.low_stock ? "product-card low-stock-card" : "product-card";
-        card.innerHTML = `
-          <img src="${item.image}" alt="${item.name}">
-          <h4>${item.name}</h4>
-          <p>Price: ₱${item.price}</p>
-          <p>Qty: ${item.qty}</p>
-          ${item.low_stock ? '<p class="low-stock-label">⚠ Low Stock</p>' : ''}
-        `;
-        productContainer.appendChild(card);
-
-        // Populate product dropdown in reservation popup
-        const option = document.createElement("option");
-        option.value = item.id;
-        option.textContent = `${item.name} (₱${item.price})`;
-        select.appendChild(option);
+      const response = await fetch('/add_reservation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: currentUsername,
+          item_id: item_id,
+          qty: qty,
+          pickup_date: pickup_date
+        })
       });
 
-    } catch (err) {
-      console.error("Failed to load items:", err);
-      productContainer.innerHTML = "<p>Error loading products. Please try again.</p>";
-    }
-  }
-
-  /* -------------------------
-     DISPLAY RESERVATIONS
-  --------------------------- */
-  async function loadReservations() {
-    try {
-      const response = await fetch(`/get_reservations/${currentUsername}`);
       const data = await response.json();
+      alert(data.message);
 
-      reservationContainer.innerHTML = "";
-
-      if (data.reservations.length === 0) {
-        reservationContainer.innerHTML = "<p>No reservations yet.</p>";
-        return;
+      if (response.ok) {
+        reservePopup.classList.add("hidden");
+        document.getElementById("reserveQty").value = "";
+        document.getElementById("reserveDate").value = "";
+        loadItems();
+        loadReservations();
       }
+    };
 
-      data.reservations.forEach(r => {
-        const row = document.createElement("div");
-        row.className = "reservation-card view-only";
-        row.innerHTML = `
-          <div class="res-info">
-            <strong>${r.item_name}</strong> • Qty: ${r.qty} • Pickup: ${r.pickup_date}
-          </div>
-          <div class="res-status">Status: ${r.status}</div>
-        `;
-        reservationContainer.appendChild(row);
-      });
-
-    } catch (err) {
-      console.error("Failed to load reservations:", err);
-      reservationContainer.innerHTML = "<p>Error loading reservations.</p>";
-    }
-  }
-
-  /* -------------------------
-     RESERVATION POPUP
-  --------------------------- */
-  document.getElementById("addReserveBtn").onclick = () => {
-    reservePopup.classList.remove("hidden");
-  };
-
-  document.getElementById("cancelReserveBtn").onclick = () => {
-    reservePopup.classList.add("hidden");
-  };
-
- where
-  /* -------------------------
-     INITIAL LOAD
-  --------------------------- */
-  loadItems();
-  loadReservations();
-</script>
+    loadItems();
+    loadReservations();
+  </script>
 </body>
 </html>
-

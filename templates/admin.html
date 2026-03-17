@@ -7,23 +7,19 @@
 </head>
 <body>
 
-  <!-- TOP NAV -->
   <header class="top-nav">
     <div class="logo-area">
-        <img src="{{ url_for('static', filename='image-removebg-preview.png') }}" alt="Logo">
+      <img src="{{ url_for('static', filename='image-removebg-preview.png') }}" alt="Logo">
     </div>
 
     <div class="nav-center">
-        <h2 class="nav-btn active" onclick="showSection('products')">Products</h2>
-        <h2 class="nav-btn" onclick="showSection('reservations')">Reservations</h2>
+      <h2 id="productsTab" class="nav-btn active" onclick="showSection('products')">Products</h2>
+      <h2 id="reservationsTab" class="nav-btn" onclick="showSection('reservations')">Reservations</h2>
     </div>
 
-    <button class="logout-btn" onclick="window.location.href='/'">
-        Logout
-    </button>
+    <button class="logout-btn">Logout</button>
   </header>
 
-  <!-- PRODUCTS SECTION -->
   <section class="main" id="products-section">
     <h3>All Products</h3>
 
@@ -35,22 +31,19 @@
     <div id="productContainer" class="product-container"></div>
   </section>
 
-  <!-- RESERVATIONS SECTION -->
   <section class="main hidden" id="reservations-section">
     <h3>All Reservations</h3>
 
     <div class="actions">
       <input type="text" id="searchResBar" placeholder="Search reservation...">
-      <button id="addReserveBtn">Add Reservation</button>
     </div>
 
     <div id="reservationContainer" class="reservation-container"></div>
   </section>
 
-  <!-- PRODUCT POPUP -->
   <div id="popup" class="popup hidden">
     <div class="popup-content">
-      <h3>Add New Product</h3>
+      <h3 id="popupTitle">Add New Product</h3>
 
       <label>Product Name</label>
       <input type="text" id="productName">
@@ -62,220 +55,284 @@
       <input type="number" id="productPrice" min="1">
 
       <label>Quantity</label>
-      <input type="number" id="productQty" min="1">
+      <input type="number" id="productQty" min="0">
 
       <div class="popup-buttons">
-        <button id="cancelBtn">Cancel</button>
-        <button id="saveBtn">Save Product</button>
+        <button id="cancelBtn" type="button">Cancel</button>
+        <button id="saveBtn" type="button">Save Product</button>
       </div>
     </div>
   </div>
 
-  <!-- ADD RESERVATION POPUP -->
-  <div id="reservePopup" class="popup hidden">
-    <div class="popup-content">
-      <h3>Add Reservation</h3>
+  <script>
+    let imageData = "";
+    let editingItemId = null;
 
-      <label>Student Name</label>
-      <input type="text" id="studentName">
+    const productContainer = document.getElementById("productContainer");
+    const reservationContainer = document.getElementById("reservationContainer");
 
-      <label>Student Number</label>
-      <input type="text" id="studentNumber">
+    const addProductBtn = document.getElementById("addProductBtn");
+    const popup = document.getElementById("popup");
+    const cancelBtn = document.getElementById("cancelBtn");
 
-      <label>Product</label>
-      <input type="text" id="reserveProduct">
+    const productImage = document.getElementById("productImage");
+    const productName = document.getElementById("productName");
+    const productPrice = document.getElementById("productPrice");
+    const productQty = document.getElementById("productQty");
+    const saveBtn = document.getElementById("saveBtn");
+    const popupTitle = document.getElementById("popupTitle");
 
-      <label>Quantity</label>
-      <input type="number" id="reserveQty" min="1">
+    const logoutBtn = document.querySelector(".logout-btn");
+    const productsTab = document.getElementById("productsTab");
+    const reservationsTab = document.getElementById("reservationsTab");
 
-      <label>Price</label>
-      <input type="number" id="reservePrice" min="1">
+    function logout() {
+      localStorage.removeItem("username");
+      localStorage.removeItem("email");
+      localStorage.removeItem("role");
+      window.location.href = "/";
+    }
 
-      <div class="popup-buttons">
-        <button id="cancelReserveBtn">Cancel</button>
-        <button id="saveReserveBtn">Proceed</button>
-      </div>
-    </div>
-  </div>
+    logoutBtn.onclick = logout;
 
-  <!-- RESERVATION DETAILS POPUP -->
-  <div id="resDetailsPopup" class="popup hidden">
-    <div class="popup-content">
-      <h3><span id="resDetailsName"></span>'s Reservation</h3>
+    function showSection(section) {
+      productsTab.classList.remove("active");
+      reservationsTab.classList.remove("active");
 
-      <label>Status</label>
-      <div class="status-buttons">
-          <button class="status-btn" onclick="setStatus('Ongoing')">Ongoing</button>
-          <button class="status-btn" onclick="setStatus('Paid')">Paid</button>
-      </div>
+      if (section === "products") {
+        productsTab.classList.add("active");
+      } else {
+        reservationsTab.classList.add("active");
+        loadAllReservations();
+      }
 
-      <button id="closeResDetails" class="close-details-btn">Close</button>
-    </div>
-  </div>
+      document.getElementById("products-section").classList.add("hidden");
+      document.getElementById("reservations-section").classList.add("hidden");
+      document.getElementById(section + "-section").classList.remove("hidden");
+    }
 
-<script>
-let imageData = "";
+    function resetPopup() {
+      editingItemId = null;
+      imageData = "";
+      popupTitle.textContent = "Add New Product";
+      saveBtn.textContent = "Save Product";
+      productName.value = "";
+      productPrice.value = "";
+      productQty.value = "";
+      productImage.value = "";
+    }
 
-// SWITCH SECTIONS
-function showSection(section) {
-  document.querySelectorAll(".nav-btn").forEach(btn => btn.classList.remove("active"));
+    addProductBtn.onclick = () => {
+      resetPopup();
+      popup.classList.remove("hidden");
+    };
 
-  if (section === "products") {
-    document.querySelector(".nav-btn:nth-child(1)").classList.add("active");
-  } else {
-    document.querySelector(".nav-btn:nth-child(2)").classList.add("active");
-  }
+    cancelBtn.onclick = () => {
+      popup.classList.add("hidden");
+      resetPopup();
+    };
 
-  document.getElementById("products-section").classList.add("hidden");
-  document.getElementById("reservations-section").classList.add("hidden");
+    productImage.addEventListener("change", function () {
+      const file = this.files[0];
+      if (!file) return;
 
-  document.getElementById(section + "-section").classList.remove("hidden");
-}
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        imageData = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
 
-/* ---------------------------
-   PRODUCT POPUP
----------------------------- */
+    saveBtn.onclick = async () => {
+      const name = productName.value.trim();
+      const price = productPrice.value;
+      const qty = productQty.value;
 
-addProductBtn.onclick = () => popup.classList.remove("hidden");
-cancelBtn.onclick = () => popup.classList.add("hidden");
+      if (!name || !price || qty === "") {
+        alert("Fill all fields.");
+        return;
+      }
 
-productImage.addEventListener("change", function() {
-  const reader = new FileReader();
-  reader.onload = () => imageData = reader.result;
-  reader.readAsDataURL(this.files[0]);
-});
+      try {
+        let response;
 
-saveBtn.onclick = async () => {
-  const name = productName.value;
-  const price = productPrice.value;
-  const qty = productQty.value;
+        if (editingItemId === null) {
+          if (!imageData) {
+            alert("Please choose an image.");
+            return;
+          }
 
-  if (!name || !price || !qty || !imageData) {
-    alert("Fill all fields.");
-    return;
-  }
-  const response = await fetch('/add_item', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: name, price: price, qty: qty, image: imageData })
+          response = await fetch("/add_item", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: name,
+              price: price,
+              qty: qty,
+              image: imageData
+            })
+          });
+        } else {
+          response = await fetch("/update_item", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              id: editingItemId,
+              name: name,
+              price: price,
+              qty: qty,
+              image: imageData
+            })
+          });
+        }
+
+        const data = await response.json();
+        alert(data.message);
+
+        if (response.ok) {
+          popup.classList.add("hidden");
+          resetPopup();
+          loadItems();
+        }
+      } catch (err) {
+        console.error("Save error:", err);
+        alert("Server error while saving product.");
+      }
+    };
+
+    async function loadItems() {
+      try {
+        const response = await fetch("/get_items");
+        const data = await response.json();
+
+        productContainer.innerHTML = "";
+
+        if (!data.items || data.items.length === 0) {
+          productContainer.innerHTML = "<p>No products available.</p>";
+          return;
+        }
+
+        data.items.forEach((item) => {
+          const card = document.createElement("div");
+          card.className = "product-card";
+
+          card.innerHTML = `
+            <button class="delete-btn" type="button">×</button>
+            <img src="${item.image}" alt="${item.name}">
+            <h4>${item.name}</h4>
+            <p>Price: ₱${item.price}</p>
+            <p>Qty: ${item.qty}</p>
+            <button class="edit-btn" type="button">Edit</button>
+          `;
+
+          const deleteBtn = card.querySelector(".delete-btn");
+          const editBtn = card.querySelector(".edit-btn");
+
+          deleteBtn.onclick = async (event) => {
+            event.stopPropagation();
+
+            try {
+              const res = await fetch(`/delete_item/${item.id}`, {
+                method: "DELETE"
+              });
+
+              const result = await res.json();
+              alert(result.message);
+              loadItems();
+            } catch (err) {
+              console.error("Failed to delete item:", err);
+              alert("Error deleting item.");
+            }
+          };
+
+          editBtn.onclick = () => {
+            editingItemId = item.id;
+            imageData = item.image; // keep old image if no new one is chosen
+            popupTitle.textContent = "Edit Product";
+            saveBtn.textContent = "Update Product";
+
+            productName.value = item.name;
+            productPrice.value = item.price;
+            productQty.value = item.qty;
+            productImage.value = "";
+
+            popup.classList.remove("hidden");
+          };
+
+          productContainer.appendChild(card);
+        });
+      } catch (err) {
+        console.error("Failed to load items:", err);
+        productContainer.innerHTML = "<p>Error loading products.</p>";
+      }
+    }
+
+    async function loadAllReservations() {
+      try {
+        const response = await fetch("/get_all_reservations");
+        const data = await response.json();
+
+        reservationContainer.innerHTML = "";
+
+        if (!data.reservations || data.reservations.length === 0) {
+          reservationContainer.innerHTML = "<p>No reservations found.</p>";
+          return;
+        }
+
+        data.reservations.forEach((reservation) => {
+          const card = document.createElement("div");
+          card.className = "reservation-card";
+
+          card.innerHTML = `
+            <div class="res-info">
+              <strong>${reservation.username}</strong><br>
+              Email: ${reservation.email}<br>
+              Product: ${reservation.item_name}<br>
+              Qty: ${reservation.qty}<br>
+              Pickup Date: ${reservation.pickup_date}
+            </div>
+
+            <div class="res-status">
+              Status:
+              <select data-id="${reservation.id}">
+                <option value="pending" ${reservation.status === "pending" ? "selected" : ""}>pending</option>
+                <option value="done" ${reservation.status === "done" ? "selected" : ""}>done</option>
+              </select>
+            </div>
+          `;
+
+          const select = card.querySelector("select");
+          select.addEventListener("change", function () {
+            updateReservationStatus(this.dataset.id, this.value);
+          });
+
+          reservationContainer.appendChild(card);
+        });
+      } catch (err) {
+        console.error("Failed to load all reservations:", err);
+        reservationContainer.innerHTML = "<p>Error loading reservations.</p>";
+      }
+    }
+
+    async function updateReservationStatus(id, status) {
+      try {
+        const response = await fetch(`/update_reservation/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: status })
         });
 
+        const data = await response.json();
+        alert(data.message);
+        loadAllReservations();
+      } catch (err) {
+        console.error("Failed to update reservation:", err);
+        alert("Error updating reservation.");
+      }
+    }
 
-  const data = await response.json();
-  console.log(data.message);
-
-
-  const card = document.createElement("div");
-  card.className = "product-card";
-
-  card.innerHTML = `
-    <button class="delete-btn">×</button>
-    <img src="${imageData}">
-    <h4>${name}</h4>
-    <p>Price: ₱${price}</p>
-    <p>Qty: ${qty}</p>
-  `;
-
-  productContainer.appendChild(card);
-  card.querySelector(".delete-btn").onclick = () => card.remove();
-
-  popup.classList.add("hidden");
-  productName.value = productPrice.value = productQty.value = "";
-  productImage.value = "";
-  imageData = "";
-
-  
-
-
-};
-
-async function loadItems() {
-  const response = await fetch('/get_items');
-  const data = await response.json();
-
-  productContainer.innerHTML = "";
-
-  data.items.forEach(item => {
-    const card = document.createElement("div");
-    card.className = "product-card";
-    card.innerHTML = `
-      <button class="delete-btn">×</button>
-      <img src="${item.image}">
-      <h4>${item.name}</h4>
-      <p>Price: ₱${item.price}</p>
-      <p>Qty: ${item.qty}</p>
-    `;
-    productContainer.appendChild(card);
-    card.querySelector(".delete-btn").onclick = () => card.remove();
-  });
-}
-/* ---------------------------
-   ADD RESERVATION POPUP
----------------------------- */
-
-addReserveBtn.onclick = () => reservePopup.classList.remove("hidden");
-cancelReserveBtn.onclick = () => reservePopup.classList.add("hidden");
-
-saveReserveBtn.onclick = () => {
-  const name = studentName.value;
-  const number = studentNumber.value;
-  const product = reserveProduct.value;
-  const qty = reserveQty.value;
-  const price = reservePrice.value;
-
-  if (!name || !number || !product || !qty || !price) {
-    alert("Fill all fields.");
-    return;
-  }
-
-  const row = document.createElement("div");
-  row.className = "reservation-card";
-
-  row.innerHTML = `
-    <div class="res-info">
-      <strong>${name}</strong> • ${number} • ${product} • Qty: ${qty} • ₱${price}
-    </div>
-    <div class="res-status">Status: None</div>
-    <button class="delete-res-btn">×</button>
-`;
-
-  reservationContainer.appendChild(row);
-
-  // delete button
-  row.querySelector(".delete-res-btn").onclick = (event) => {
-    event.stopPropagation();
-    row.remove();
-  };
-
-  // open details
-  row.onclick = () => {
-    document.getElementById("resDetailsName").textContent = name;
-    resDetailsPopup.classList.remove("hidden");
-  };
-
-  reservePopup.classList.add("hidden");
-
-  studentName.value = studentNumber.value = reserveProduct.value =
-  reserveQty.value = reservePrice.value = "";
-
-};
-
-/* ---------------------------
-   RESERVATION DETAILS POPUP
----------------------------- */
-
-closeResDetails.onclick = () => resDetailsPopup.classList.add("hidden");
-
-function setStatus(status) {
-  alert("Status updated to: " + status);
-}
-loadItems();
-
-</script>
-
+    loadItems();
+  </script>
 
 </body>
 </html>
-
-
-
